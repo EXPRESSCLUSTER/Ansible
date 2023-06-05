@@ -210,6 +210,8 @@ all:
             - repl-license-2.key
 ```
 
+The whole example of the inventory file is available from [here](./inventory.yml).
+
 ### 4. Restart the operating system
 
 ```
@@ -252,7 +254,7 @@ all:
       shell: clpcl -s
 ```
 
-The whole example of the playbook is available from here.
+The whole example of the playbook is available from [here](./expresscluster.yml).
 
 ## Testing Playbook
 
