@@ -1,0 +1,44 @@
+- hosts: cluster
+  become: yes
+  tasks:
+
+    - name: Copy files (rpm, license keys, clp.conf, etc.)
+      copy:
+        src: ./ecx-files
+        dest: /tmp
+
+    - name: Install EXPRESSCLUSTER
+      yum:
+        name: /tmp/ecx-files/expresscls-5.1.0-1.x86_64.rpm
+        state: present
+        disable_gpg_check: true
+
+    - name: Register EXPRESSCLUSTER's licenses
+      shell: clplcnsc -i '/tmp/ecx-files/{{ item }}'
+      with_items: '{{ ecx_license_file }}'
+
+    - name: Reboot the cluster servers
+      shell: sleep 1 && reboot
+      async: 1
+      poll: 0
+    - name: Wait for OS reboot completion
+      pause:
+        seconds: 60
+
+    - name: Apply the configuration (executed only on the primary server)
+      shell: clpcfctrl --push -x /tmp/ecx-files/conf --force
+      when: inventory_hostname == 'primary'
+
+    - name: Restart EXPRESSCLUSTER's services
+      systemd:
+        name: '{{ item }}'
+        state: restarted
+      with_items:
+        - clusterpro_alertsync
+        - clusterpro_webmgr
+        - clusterpro_ib
+        - clusterpro_api
+        - clusterpro_nm
+
+    - name: Start cluster
+      shell: clpcl -s
